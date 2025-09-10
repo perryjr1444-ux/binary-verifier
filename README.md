@@ -16,7 +16,7 @@ A security tool for verifying binary signatures and calculating checksums on mac
 
 ```bash
 # Add the tap
-brew tap yourusername/binary-verifier
+brew tap perryjr1444-ux/binary-verifier
 
 # Install the tool
 brew install binary-verifier
@@ -26,7 +26,7 @@ brew install binary-verifier
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/binary-verifier.git
+git clone https://github.com/perryjr1444-ux/binary-verifier.git
 cd binary-verifier
 
 # Make the script executable
