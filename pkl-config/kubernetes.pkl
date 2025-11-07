@@ -1,0 +1,127 @@
+/// Kubernetes Configuration Generator
+/// Generates K8s manifests for AutoSecure Platform agents
+module kubernetes
+
+secrets: Any
+paths: Any
+
+/// Namespace Configuration
+namespace = new {
+  apiVersion = "v1"
+  kind = "Namespace"
+  metadata = new {
+    name = secrets.kubernetes.namespace
+    labels = new {
+      name = secrets.kubernetes.namespace
+      environment = "production"
+    }
+  }
+}
+
+/// Agent Deployment Template
+function agentDeployment(agentId: String, replicas: Int): Dynamic =
+  new {
+    apiVersion = "apps/v1"
+    kind = "Deployment"
+    metadata = new {
+      name = "autosecure-agent-\(agentId)"
+      namespace = secrets.kubernetes.namespace
+      labels = new {
+        app = "autosecure-agent"
+        agent_id = agentId
+      }
+    }
+    spec = new {
+      replicas = replicas
+      selector = new {
+        matchLabels = new {
+          app = "autosecure-agent"
+          agent_id = agentId
+        }
+      }
+      template = new {
+        metadata = new {
+          labels = new {
+            app = "autosecure-agent"
+            agent_id = agentId
+          }
+        }
+        spec = new {
+          containers = new Listing {
+            new {
+              name = "agent"
+              image = "autosecure/agent:latest"
+              env = new Listing {
+                new {
+                  name = "AGENT_ID"
+                  value = agentId
+                }
+                new {
+                  name = "K8S_NAMESPACE"
+                  value = secrets.kubernetes.namespace
+                }
+                new {
+                  name = "AWS_ACCESS_KEY_ID"
+                  value = secrets.aws.access_key_id
+                }
+                new {
+                  name = "AWS_SECRET_ACCESS_KEY"
+                  value = secrets.aws.secret_access_key
+                }
+                new {
+                  name = "AWS_DEFAULT_REGION"
+                  value = secrets.aws.region
+                }
+              }
+              ports = new Listing {
+                new {
+                  containerPort = 8080
+                  protocol = "TCP"
+                }
+              }
+              resources = new {
+                requests = new {
+                  memory = "256Mi"
+                  cpu = "250m"
+                }
+                limits = new {
+                  memory = "512Mi"
+                  cpu = "500m"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+/// Generate deployments for agents
+agents = new Listing {
+  agentDeployment("agent-1", 1)
+  agentDeployment("agent-2", 1)
+  agentDeployment("agent-3", 1)
+}
+
+/// Service Configuration
+service = new {
+  apiVersion = "v1"
+  kind = "Service"
+  metadata = new {
+    name = "autosecure-agents"
+    namespace = secrets.kubernetes.namespace
+  }
+  spec = new {
+    selector = new {
+      app = "autosecure-agent"
+    }
+    ports = new Listing {
+      new {
+        protocol = "TCP"
+        port = 80
+        targetPort = 8080
+      }
+    }
+    type = "LoadBalancer"
+  }
+}

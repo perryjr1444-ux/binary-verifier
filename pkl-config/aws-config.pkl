@@ -1,0 +1,57 @@
+/// AWS Configuration Files Generator
+/// Generates ~/.aws/credentials and ~/.aws/config
+module aws-config
+
+secrets: Any
+paths: Any
+
+/// AWS Credentials File (~/.aws/credentials)
+credentials = new {
+  default = new {
+    aws_access_key_id = secrets.aws.access_key_id
+    aws_secret_access_key = secrets.aws.secret_access_key
+  }
+
+  snapshot_role = new {
+    role_arn = secrets.aws.snapshot_role_arn
+    source_profile = "default"
+  }
+}
+
+/// AWS Config File (~/.aws/config)
+config = new {
+  default = new {
+    region = secrets.aws.region
+    output = "json"
+  }
+
+  ["profile snapshot_role"] = new {
+    role_arn = secrets.aws.snapshot_role_arn
+    source_profile = "default"
+    region = secrets.aws.region
+  }
+}
+
+/// Generate INI format for AWS files
+function renderCredentials(): String =
+  """
+  [default]
+  aws_access_key_id = \(credentials.default.aws_access_key_id)
+  aws_secret_access_key = \(credentials.default.aws_secret_access_key)
+
+  [snapshot_role]
+  role_arn = \(credentials.snapshot_role.role_arn)
+  source_profile = \(credentials.snapshot_role.source_profile)
+  """
+
+function renderConfig(): String =
+  """
+  [default]
+  region = \(config.default.region)
+  output = \(config.default.output)
+
+  [profile snapshot_role]
+  role_arn = \(config["profile snapshot_role"].role_arn)
+  source_profile = \(config["profile snapshot_role"].source_profile)
+  region = \(config["profile snapshot_role"].region)
+  """

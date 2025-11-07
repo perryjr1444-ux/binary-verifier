@@ -20,3 +20,10 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Pkl Infrastructure - SECURITY: Never commit secrets!
+pkl-config/secrets.pkl
+generated-configs/
+
+# Keep the template for reference
+!pkl-config/secrets.pkl.template
