@@ -1,0 +1,83 @@
+/// MCP Server Configurations
+/// Generates claude_desktop_config.json
+module mcp-servers
+
+secrets: Any
+paths: Any
+
+/// Claude Desktop MCP Server Configuration
+output = new {
+  mcpServers = new Dynamic {
+    // Mantis MCP Server - Defensive Security Operations
+    ["mantis-mcp-server"] = new {
+      command = "\(paths.projects_dir)/mantis-mcp-server/mantis-mcp"
+      args = new Listing {
+        "--mode"
+        "defensive"
+      }
+      env = new {
+        CRYSTALS_KEY_PATH = "\(paths.home)/.mantis/crystals.key"
+        MANTIS_LOG_LEVEL = "info"
+      }
+    }
+
+    // Claude Code Bridge - Local filesystem bridge
+    ["claude-code-bridge"] = new {
+      command = "python3"
+      args = new Listing {
+        "\(paths.projects_dir)/claude-code-bridge/claude_code_bridge.py"
+      }
+      env = new {
+        BRIDGE_MODE = "local"
+        WORKSPACE_ROOT = paths.projects_dir
+      }
+    }
+
+    // Mobile Bridge - iOS/Android integration
+    ["mobile-bridge"] = new {
+      command = "\(paths.projects_dir)/mobile-bridge/mobile-bridge"
+      args = new Listing {
+        "--platform"
+        "ios"
+      }
+      env = new {
+        MOBILE_BRIDGE_TOKEN = secrets.mcp.mobile_bridge_token
+        DEVICE_TRUST_MODE = "strict"
+      }
+    }
+
+    // AWS Snapshot Manager - EBS snapshot operations
+    ["aws-snapshot-manager"] = new {
+      command = "python3"
+      args = new Listing {
+        "\(paths.projects_dir)/aws-snapshot-manager/snapshot_manager.py"
+      }
+      env = new {
+        AWS_ACCESS_KEY_ID = secrets.aws.access_key_id
+        AWS_SECRET_ACCESS_KEY = secrets.aws.secret_access_key
+        AWS_DEFAULT_REGION = secrets.aws.region
+        SNAPSHOT_ROLE_ARN = secrets.aws.snapshot_role_arn
+      }
+    }
+
+    // Filesystem MCP - Extended file operations
+    ["filesystem"] = new {
+      command = "npx"
+      args = new Listing {
+        "-y"
+        "@modelcontextprotocol/server-filesystem"
+        paths.projects_dir
+        paths.home
+      }
+    }
+
+    // Git MCP - Git operations
+    ["git"] = new {
+      command = "npx"
+      args = new Listing {
+        "-y"
+        "@modelcontextprotocol/server-git"
+      }
+    }
+  }
+}

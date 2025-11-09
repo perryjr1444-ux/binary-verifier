@@ -1,0 +1,70 @@
+/// Main Infrastructure Configuration
+/// This module orchestrates all your infrastructure configs
+module infrastructure
+
+import "secrets.pkl"
+import "mcp-servers.pkl"
+import "aws-config.pkl"
+import "kubernetes.pkl"
+
+/// System Paths Configuration
+paths: Paths = new {
+  home = "/home/user"
+  config_dir = "\(home)/.config"
+  claude_desktop_config = "\(config_dir)/claude_desktop_config.json"
+  aws_dir = "\(home)/.aws"
+  kube_dir = "\(home)/.kube"
+  projects_dir = "\(home)/projects"
+}
+
+/// Load secrets
+secrets = import("secrets.pkl")
+
+/// MCP Server Configuration
+mcpServers = (mcp-servers) {
+  secrets = secrets
+  paths = paths
+}
+
+/// AWS Configuration
+awsConfig = (aws-config) {
+  secrets = secrets
+  paths = paths
+}
+
+/// Kubernetes Configuration
+kubernetesConfig = (kubernetes) {
+  secrets = secrets
+  paths = paths
+}
+
+/// Environment Variables
+environment: Environment = new {
+  // AWS
+  AWS_ACCESS_KEY_ID = secrets.aws.access_key_id
+  AWS_SECRET_ACCESS_KEY = secrets.aws.secret_access_key
+  AWS_DEFAULT_REGION = secrets.aws.region
+
+  // MCP
+  MANTIS_CRYSTALS_KEY_PATH = "\(paths.home)/.mantis/crystals.key"
+  MOBILE_BRIDGE_TOKEN = secrets.mcp.mobile_bridge_token
+
+  // Kubernetes
+  KUBECONFIG = "\(paths.kube_dir)/config"
+  K8S_NAMESPACE = secrets.kubernetes.namespace
+
+  // GitHub
+  GITHUB_TOKEN = secrets.github.personal_access_token
+}
+
+/// Type Definitions
+typealias Paths = {
+  home: String
+  config_dir: String
+  claude_desktop_config: String
+  aws_dir: String
+  kube_dir: String
+  projects_dir: String
+}
+
+typealias Environment = Mapping<String, String>
